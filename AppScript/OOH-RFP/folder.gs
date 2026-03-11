@@ -15,6 +15,7 @@ var TARGET_TAB = 'Vendor Links';
 var INPUTS_TAB_NAME = 'Inputs';
 var PARENT_FOLDER_CELL = 'B2';
 var CAMPAIGN_NAME_CELL = 'B6';
+var SUPERGRID_TEMPLATE_CELL = 'B8'; // Cell in Inputs tab holding the Supergrid Template ID
 /* =================================================== */
 
 function onOpen() {
@@ -76,6 +77,22 @@ function prepareCopies_(opts) {
       toast_('Campaign Name missing in ' + INPUTS_TAB_NAME + '!' + CAMPAIGN_NAME_CELL);
       logLine_('ERROR: Campaign Name missing in Inputs tab');
       return;
+    }
+
+    // ---- Copy Supergrid Template into parent folder ----
+    var supergridId = getSupergridTemplateIdFromInputs_();
+    if (supergridId) {
+      try {
+        var sgFile = DriveApp.getFileById(supergridId);
+        var sgCopyName = safeName_(campaignName + ' | Supergrid');
+        sgFile.makeCopy(sgCopyName, parent);
+        logLine_('Supergrid copied to parent folder as "' + sgCopyName + '"');
+      } catch (eSg) {
+        toast_('Supergrid copy error: ' + eSg.message);
+        logLine_('ERROR: Supergrid copy failed – ' + eSg.message);
+      }
+    } else {
+      logLine_('INFO: No Supergrid Template ID in Inputs tab, skipping copy');
     }
   }
 
@@ -254,6 +271,15 @@ function getParentFolderIdFromInputs_() {
   var sheet = ss.getSheetByName(INPUTS_TAB_NAME);
   if (!sheet) return null;
   var val = sheet.getRange(PARENT_FOLDER_CELL).getValue();
+  return val ? String(val).trim() : null;
+}
+
+// Helper to fetch Supergrid Template ID from "Inputs" tab
+function getSupergridTemplateIdFromInputs_() {
+  var ss = SpreadsheetApp.getActive();
+  var sheet = ss.getSheetByName(INPUTS_TAB_NAME);
+  if (!sheet) return null;
+  var val = sheet.getRange(SUPERGRID_TEMPLATE_CELL).getValue();
   return val ? String(val).trim() : null;
 }
 

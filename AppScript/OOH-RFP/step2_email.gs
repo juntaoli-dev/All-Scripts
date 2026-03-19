@@ -213,6 +213,13 @@ logLine_('DEBUG: Sending email. Market=' + market + ' Vendor=' + vendor +
   }
 
   toast_((dry ? 'Preview' : 'Live') + ': processed ' + processed + ' emails.');
+
+  // Log to external Automation Tracker (LIVE only)
+  if (!dry) {
+    logToAutomationTracker_('Step 2: Send Vendor Emails', {
+      'Links to Resources': ss.getUrl()
+    });
+  }
 }
 
 /************** Rich Template Helper (Drive API + Structure Parsing) **************/

@@ -242,11 +242,22 @@ function prepareCopies_(opts) {
   toast_((live ? 'LIVE' : 'PREVIEW') + ' processed rows: ' + processed);
   logLine_((live ? 'LIVE' : 'PREVIEW') + ' processed=' + processed + ', vendors=' + Object.keys(linkMap).length);
 
-  // Log to external Automation Tracker (LIVE only)
+  // Log to external Automation Log (LIVE only)
   if (live) {
-    logToAutomationTracker_('Step 1: Prepare File Copies', {
-      'Links to Resources': ss.getUrl()
-    });
+    // Count only rows where Tier, Market, Vendor, Contact, Email, RFP Link are all filled
+    var rfpCount = 0;
+    var reqCols = ['tier','market','vendor','contact','email','rfp link'];
+    if (data) {
+      for (var ri = 0; ri < data.length; ri++) {
+        var filled = true;
+        for (var ci = 0; ci < reqCols.length; ci++) {
+          var colIdx = idx[reqCols[ci]];
+          if (colIdx == null || !data[ri][colIdx] || String(data[ri][colIdx]).trim() === '') { filled = false; break; }
+        }
+        if (filled) rfpCount++;
+      }
+    }
+    logToAutomationLog_(campaignName, rfpCount);
   }
 }
 

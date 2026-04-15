@@ -1,8 +1,8 @@
 /* AUTOMATION LOG — appends a row to the external "Automation Log" tab
    Columns: Campaign Name | Date | Time | Number of RFPs Sent              */
 
-var LOG_SHEET_ID  = '17Tp-e3e1i0_nw52_qxGdkrMRNv9_nSeejfOr2fwRQrs';
-var LOG_TAB_NAME  = 'Automation Log';
+var LOG_SHEET_ID  = '1liw1F0anynQzz-0aUpuqYKQjwxS9ScZ5hupc32_Yblo';
+var LOG_TAB_NAME  = 'OOH Automation Log';
 
 // Helper: find tab by trimmed name (handles trailing spaces)
 function findLogTab_(ss) {
@@ -29,18 +29,20 @@ function authorizeLogAccess() {
  * @param {string} campaignName  Value from Inputs!B6
  * @param {number} rfpCount      Number of data rows in the RFP List tab
  */
-function logToAutomationLog_(campaignName, rfpCount) {
+function logToAutomationLog_(campaignName, rfpCount, automationType) {
   if (!campaignName) { logLine_('LOG: skipped — no campaign name'); return; }
   try {
     var now  = new Date();
     var date = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd');
     var time = Utilities.formatDate(now, Session.getScriptTimeZone(), 'HH:mm:ss');
-
+    var file_name = SpreadsheetApp.getActive().getName();
+    var file_url = SpreadsheetApp.getActive().getUrl();
     var extSs  = SpreadsheetApp.openById(LOG_SHEET_ID);
     var extTab  = findLogTab_(extSs);
     if (!extTab) { logLine_('LOG ERROR: Tab "' + LOG_TAB_NAME + '" not found'); return; }
 
-    var row = [date, time, campaignName, rfpCount];
+    var emailSender = (automationType && automationType.toLowerCase().indexOf('send') !== -1) ? Session.getActiveUser().getEmail() : '';
+    var row = [date, time, '', campaignName, automationType, rfpCount, emailSender];
 
     // Find first empty row in column A (skip header row 1)
     var colA = extTab.getRange(2, 1, extTab.getMaxRows() - 1, 1).getValues();
@@ -48,12 +50,17 @@ function logToAutomationLog_(campaignName, rfpCount) {
     for (var i = 0; i < colA.length; i++) {
       if (!colA[i][0] || String(colA[i][0]).trim() === '') { insertRow = i + 2; break; }
     }
-    if (insertRow > 0) {
-      extTab.getRange(insertRow, 1, 1, row.length).setValues([row]);
-      logLine_('LOG: Wrote row ' + insertRow + ' — ' + campaignName);
-    } else {
-      extTab.appendRow(row);
-      logLine_('LOG: Appended row for ' + campaignName);
-    }
+if (insertRow > 0) {
+  extTab.getRange(insertRow, 1, 1, row.length).setValues([row]);
+  extTab.getRange(insertRow, 3).setFormula('=HYPERLINK("' + file_url + '","' + file_name + '")');
+  logLine_('LOG: Wrote row ' + insertRow + ' — ' + campaignName);
+} else {
+  extTab.appendRow(row);
+  var lastRow = extTab.getLastRow();
+  extTab.getRange(lastRow, 3).setFormula('=HYPERLINK("' + file_url + '","' + file_name + '")');
+  logLine_('LOG: Appended row for ' + campaignName);
+}
   } catch (e) { logLine_('LOG ERROR: ' + e.message); }
 }
+
+

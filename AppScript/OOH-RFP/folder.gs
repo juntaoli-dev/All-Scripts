@@ -257,7 +257,7 @@ function prepareCopies_(opts) {
         if (filled) rfpCount++;
       }
     }
-    logToAutomationLog_(campaignName, rfpCount);
+    logToAutomationLog_(campaignName, rfpCount, "Prepare Copies (Live)");
   }
 }
 
@@ -430,3 +430,4 @@ function logLine_(msg){
 
   t.appendRow([new Date(), String(msg || '')]);
 }
+function testTracker() { logToAutomationTracker_('Step 1: Prepare File Copies', {'Links to Resources': SpreadsheetApp.getActive().getUrl()}); }
